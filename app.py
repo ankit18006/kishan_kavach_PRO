@@ -1,6 +1,7 @@
 
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flask_socketio import SocketIO
+from flask import request, jsonify
 from models import db, SensorData, User
 from ai import calculate_ai
 import requests, math
@@ -15,6 +16,51 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/api/data', methods=['POST'])
+def receive_data():
+    try:
+        data = request.json
+
+        temp = float(data.get('temperature'))
+        humidity = float(data.get('humidity'))
+        gas = float(data.get('gas'))
+        battery = float(data.get('battery'))
+        crop = data.get('crop')
+
+        if temp == 0:
+            return {"status": "ignored"}
+
+        ai = calculate_ai(temp, humidity, gas, crop)
+
+        sensor = SensorData(
+            temperature=temp,
+            humidity=humidity,
+            gas=gas,
+            battery=battery,
+            crop=crop,
+            health_score=ai['health_score'],
+            days_remaining=ai['days_remaining'],
+            risk=ai['risk']
+        )
+
+        db.session.add(sensor)
+        db.session.commit()
+
+        # 🔥 REALTIME UPDATE
+        socketio.emit("sensor_update", {
+            "temperature": temp,
+            "humidity": humidity,
+            "gas": gas,
+            "battery": battery,
+            **ai
+        })
+
+        return {"status": "success"}
+
+    except Exception as e:
+        return {"error": str(e)}
 
 @socketio.on('sensor_data')
 def handle_sensor_data(data):
