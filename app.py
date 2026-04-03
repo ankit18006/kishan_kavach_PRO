@@ -62,6 +62,36 @@ def receive_data():
     except Exception as e:
         return {"error": str(e)}
 
+
+@app.route('/api/predict')
+def predict():
+    data = SensorData.query.order_by(SensorData.timestamp.desc()).limit(10).all()
+
+    if not data:
+        return {"data": []}
+
+    last = data[0]
+
+    predictions = []
+    temp = last.temperature
+    humidity = last.humidity
+    gas = last.gas
+
+    for i in range(1, 6):
+        temp += 0.4
+        humidity += 1
+        gas += 10
+
+        risk = min(100, int(temp + humidity/2 + gas/20))
+
+        predictions.append({
+            "time": f"+{i}h",
+            "risk": risk
+        })
+
+    return {"data": predictions}
+
+
 @socketio.on('sensor_data')
 def handle_sensor_data(data):
     try:
