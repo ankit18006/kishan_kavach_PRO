@@ -88,8 +88,11 @@ def predict():
 
 @app.route('/api/history')
 def history():
-    data = SensorData.query.order_by(SensorData.timestamp.desc()).limit(20).all()
-    return jsonify([{"t": d.temperature} for d in data])
+    try:
+        data = SensorData.query.order_by(SensorData.id.desc()).limit(20).all()
+        return jsonify([{"t": d.temperature} for d in data])
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.route('/api/weather')
 def weather():
