@@ -1,66 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Kishan Kavach</title>
+<title>Kishan Kavach PRO</title>
+
 <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
   margin:0;
   font-family: 'Segoe UI';
-  background: linear-gradient(135deg, #0f172a, #020617);
-  color: white;
+  background: linear-gradient(135deg,#020617,#0f172a);
+  color:white;
 }
 
 .container {
-  max-width: 900px;
-  margin: auto;
-  padding: 20px;
-  text-align: center;
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+
+h2 { text-align:center; }
+
+.status {
+  text-align:center;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:15px;
+}
+
+.wait { background:#7f1d1d; }
+.live { background:#065f46; }
+
+.grid {
+  display:grid;
+  grid-template-columns: repeat(2,1fr);
+  gap:10px;
 }
 
 .card {
   background: rgba(255,255,255,0.05);
   backdrop-filter: blur(10px);
-  padding: 20px;
-  border-radius: 12px;
-  margin: 10px;
+  padding:20px;
+  border-radius:12px;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+.big { font-size:20px; }
 
-.status {
-  margin: 10px;
-  padding: 10px;
-  border-radius: 10px;
-}
-
-.live { background: #065f46; }
-.wait { background: #7f1d1d; }
-
-.big {
-  font-size: 22px;
+canvas {
+  margin-top:20px;
+  background:#020617;
+  padding:10px;
+  border-radius:10px;
 }
 </style>
-
-<script>
-const socket = io();
-
-socket.on("sensor_update", (d) => {
-  document.getElementById("status").className = "status live";
-  document.getElementById("status").innerText = "🟢 Live Data";
-
-  document.getElementById("temp").innerText = d.temperature;
-  document.getElementById("hum").innerText = d.humidity;
-  document.getElementById("gas").innerText = d.gas;
-  document.getElementById("bat").innerText = d.battery;
-  document.getElementById("risk").innerText = d.risk;
-});
-</script>
 
 </head>
 
@@ -68,7 +61,7 @@ socket.on("sensor_update", (d) => {
 
 <div class="container">
 
-<h2>🚜 Kishan Kavach</h2>
+<h2>🚜 Kishan Kavach PRO</h2>
 
 <div id="status" class="status wait">🔴 Waiting for device...</div>
 
@@ -81,7 +74,101 @@ socket.on("sensor_update", (d) => {
 
 <div class="card big">🔥 Risk: <span id="risk">--</span></div>
 
+<!-- 📊 Graph -->
+<canvas id="chart"></canvas>
+
+<!-- 🔮 AI Graph -->
+<canvas id="aiChart"></canvas>
+
+<!-- 🔥 Heatmap -->
+<div id="heatmap" class="card" style="text-align:center;">
+  AI Heatmap: --
 </div>
+
+</div>
+
+<script>
+const socket = io();
+
+let chart, aiChart;
+
+// 📊 LIVE UPDATE
+socket.on("sensor_update", (d) => {
+
+  document.getElementById("status").className="status live";
+  document.getElementById("status").innerText="🟢 Live Data";
+
+  document.getElementById("temp").innerText=d.temperature;
+  document.getElementById("hum").innerText=d.humidity;
+  document.getElementById("gas").innerText=d.gas;
+  document.getElementById("bat").innerText=d.battery;
+  document.getElementById("risk").innerText=d.risk;
+
+  updateHeatmap(d.risk);
+});
+
+// 🔥 HEATMAP
+function updateHeatmap(risk){
+  const box = document.getElementById("heatmap");
+
+  if(risk=="HIGH"){
+    box.style.background="red";
+    box.innerText="🔥 HIGH RISK";
+  }
+  else if(risk=="MEDIUM"){
+    box.style.background="orange";
+    box.innerText="⚠ MEDIUM RISK";
+  }
+  else{
+    box.style.background="green";
+    box.innerText="✅ SAFE";
+  }
+}
+
+// 📊 HISTORY GRAPH
+async function loadChart(){
+  const res = await fetch('/api/history');
+  const data = await res.json();
+
+  const labels = data.map((_,i)=>i);
+  const temp = data.map(x=>x.t);
+
+  chart = new Chart(document.getElementById("chart"),{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[{
+        label:'Temperature',
+        data:temp
+      }]
+    }
+  });
+}
+
+loadChart();
+
+// 🔮 AI PREDICTION GRAPH
+async function loadAI(){
+  const res = await fetch('/api/predict');
+  const json = await res.json();
+
+  if(json.data.length==0) return;
+
+  aiChart = new Chart(document.getElementById("aiChart"),{
+    type:'line',
+    data:{
+      labels:json.data.map(d=>d.time),
+      datasets:[{
+        label:'Future Risk',
+        data:json.data.map(d=>d.risk),
+        borderDash:[5,5]
+      }]
+    }
+  });
+}
+
+loadAI();
+</script>
 
 </body>
 </html>
