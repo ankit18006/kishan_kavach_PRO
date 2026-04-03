@@ -1,14 +1,63 @@
-
 <!DOCTYPE html>
 <html>
 <head>
+<title>Kishan Kavach</title>
 <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/static/script.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+
+.card {
+  background: #1e293b;
+  padding: 20px;
+  margin: 10px;
+  border-radius: 10px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+</style>
+
+<script>
+const socket = io();
+
+socket.on("sensor_update", (d) => {
+  document.getElementById("status").innerText = "🟢 Live";
+
+  document.getElementById("temp").innerText = d.temperature;
+  document.getElementById("hum").innerText = d.humidity;
+  document.getElementById("gas").innerText = d.gas;
+  document.getElementById("bat").innerText = d.battery;
+  document.getElementById("risk").innerText = d.risk;
+});
+</script>
+
 </head>
+
 <body>
-<h2>Kishan Kavach PRO</h2>
-<div id="status">Waiting...</div>
-<canvas id="chart"></canvas>
+
+<h2>Kishan Kavach 🚜</h2>
+<div id="status">🔴 Waiting for device...</div>
+
+<div class="grid">
+
+<div class="card">🌡 Temp: <span id="temp">--</span></div>
+<div class="card">💧 Humidity: <span id="hum">--</span></div>
+<div class="card">🧪 Gas: <span id="gas">--</span></div>
+<div class="card">🔋 Battery: <span id="bat">--</span></div>
+
+</div>
+
+<div class="card">
+🔥 Risk: <span id="risk">--</span>
+</div>
+
 </body>
 </html>
