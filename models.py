@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 db = SQLAlchemy()
 
+
 class SensorData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     temperature = db.Column(db.Float)
@@ -10,10 +11,12 @@ class SensorData(db.Model):
     gas = db.Column(db.Float)
     battery = db.Column(db.Float)
     crop = db.Column(db.String(50))
+
     health_score = db.Column(db.Integer)
     days_remaining = db.Column(db.Integer)
     risk = db.Column(db.String(10))
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)  # ✅ MUST
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
