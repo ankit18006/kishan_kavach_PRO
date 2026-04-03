@@ -1,8 +1,6 @@
-
-from flask import Flask, render_template, request, session, redirect, jsonify
+from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
-from flask import request, jsonify
-from models import db, SensorData, User
+from models import db, SensorData
 from ai import calculate_ai
 import requests, math
 
@@ -16,7 +14,6 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/api/data', methods=['POST'])
 def receive_data():
@@ -48,7 +45,6 @@ def receive_data():
         db.session.add(sensor)
         db.session.commit()
 
-        # 🔥 REALTIME UPDATE
         socketio.emit("sensor_update", {
             "temperature": temp,
             "humidity": humidity,
@@ -61,7 +57,6 @@ def receive_data():
 
     except Exception as e:
         return {"error": str(e)}
-
 
 @app.route('/api/predict')
 def predict():
@@ -91,43 +86,10 @@ def predict():
 
     return {"data": predictions}
 
-
-@socketio.on('sensor_data')
-def handle_sensor_data(data):
-    try:
-        temp = float(data.get('temperature'))
-        if temp == 0 or math.isnan(temp):
-            return
-
-        humidity = float(data.get('humidity'))
-        gas = float(data.get('gas'))
-        battery = float(data.get('battery'))
-        crop = data.get('crop')
-
-        ai = calculate_ai(temp, humidity, gas, crop)
-
-        d = SensorData(temperature=temp, humidity=humidity, gas=gas,
-                       battery=battery, crop=crop,
-                       health_score=ai['health_score'],
-                       days_remaining=ai['days_remaining'],
-                       risk=ai['risk'])
-
-        db.session.add(d)
-        db.session.commit()
-
-        socketio.emit("sensor_update", {
-            "temperature": temp, "humidity": humidity,
-            "gas": gas, "battery": battery,
-            **ai
-        })
-
-    except Exception as e:
-        print(e)
-
 @app.route('/api/history')
 def history():
     data = SensorData.query.order_by(SensorData.timestamp.desc()).limit(20).all()
-    return jsonify([{"t":d.temperature} for d in data])
+    return jsonify([{"t": d.temperature} for d in data])
 
 @app.route('/api/weather')
 def weather():
@@ -137,4 +99,4 @@ def weather():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    socketio.run(app)
+    socketio.run(app, host='0.0.0.0', port=5000)
