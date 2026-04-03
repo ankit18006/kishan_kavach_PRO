@@ -3,27 +3,47 @@
 <head>
 <title>Kishan Kavach</title>
 <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-  <canvas id="aiChart"></canvas>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
-  font-family: Arial;
-  background: #0f172a;
+  margin:0;
+  font-family: 'Segoe UI';
+  background: linear-gradient(135deg, #0f172a, #020617);
   color: white;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
   text-align: center;
 }
 
 .card {
-  background: #1e293b;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
   padding: 20px;
+  border-radius: 12px;
   margin: 10px;
-  border-radius: 10px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.status {
+  margin: 10px;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.live { background: #065f46; }
+.wait { background: #7f1d1d; }
+
+.big {
+  font-size: 22px;
 }
 </style>
 
@@ -31,7 +51,8 @@ body {
 const socket = io();
 
 socket.on("sensor_update", (d) => {
-  document.getElementById("status").innerText = "🟢 Live";
+  document.getElementById("status").className = "status live";
+  document.getElementById("status").innerText = "🟢 Live Data";
 
   document.getElementById("temp").innerText = d.temperature;
   document.getElementById("hum").innerText = d.humidity;
@@ -45,20 +66,21 @@ socket.on("sensor_update", (d) => {
 
 <body>
 
-<h2>Kishan Kavach 🚜</h2>
-<div id="status">🔴 Waiting for device...</div>
+<div class="container">
+
+<h2>🚜 Kishan Kavach</h2>
+
+<div id="status" class="status wait">🔴 Waiting for device...</div>
 
 <div class="grid">
-
-<div class="card">🌡 Temp: <span id="temp">--</span></div>
-<div class="card">💧 Humidity: <span id="hum">--</span></div>
-<div class="card">🧪 Gas: <span id="gas">--</span></div>
-<div class="card">🔋 Battery: <span id="bat">--</span></div>
-
+  <div class="card big">🌡 Temp: <span id="temp">--</span></div>
+  <div class="card big">💧 Humidity: <span id="hum">--</span></div>
+  <div class="card big">🧪 Gas: <span id="gas">--</span></div>
+  <div class="card big">🔋 Battery: <span id="bat">--</span></div>
 </div>
 
-<div class="card">
-🔥 Risk: <span id="risk">--</span>
+<div class="card big">🔥 Risk: <span id="risk">--</span></div>
+
 </div>
 
 </body>
